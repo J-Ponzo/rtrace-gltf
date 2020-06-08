@@ -52,7 +52,7 @@ private:
 /// Extracted from PrintInfo()
 /// </summary>
 /// <returns>The gltf designed by the given path</returns>
-glTF::Document DeserializeDocument(filesystem::path path) {
+glTF::Document DeserializeDocument(filesystem::path path, glTF::Document& document, std::unique_ptr<glTF::GLTFResourceReader>& resourceReader) {
     // Pass the absolute path, without the filename, to the stream reader
     auto streamReader = std::make_unique<StreamReader>(path.parent_path());
 
@@ -65,8 +65,6 @@ glTF::Document DeserializeDocument(filesystem::path path) {
     {
         return "." + ext;
     };
-
-    std::unique_ptr<glTF::GLTFResourceReader> resourceReader;
 
     // If the file has a '.gltf' extension then create a GLTFResourceReader
     if (pathFileExt == MakePathExt(glTF::GLTF_EXTENSION))
@@ -101,7 +99,6 @@ glTF::Document DeserializeDocument(filesystem::path path) {
         throw std::runtime_error("Command line argument path filename extension must be .gltf or .glb");
     }
 
-    glTF::Document document;
     try
     {
         document = glTF::Deserialize(manifest);
@@ -122,7 +119,34 @@ glTF::Document DeserializeDocument(filesystem::path path) {
 
 Scene* loadScene(filesystem::path path)
 {
-    glTF::Document document = DeserializeDocument(path);
+	std::unique_ptr<glTF::GLTFResourceReader> resourceReader;
+	glTF::Document document;
+	DeserializeDocument(path, document, resourceReader);
+
+	for (const auto& mesh : document.meshes.Elements())
+	{
+		std::cout << "Mesh: " << mesh.id << "\n";
+
+		for (const auto& meshPrimitive : mesh.primitives)
+		{
+			std::string accessorId;
+
+			if (meshPrimitive.TryGetAttributeAccessorId(glTF::ACCESSOR_POSITION, accessorId))
+			{
+				const glTF::Accessor& accessor = document.accessors.Get(accessorId);
+
+				const auto data = resourceReader->ReadBinaryData<float>(document, accessor);
+				const auto dataByteLength = data.size() * sizeof(float);
+				std::cout << "MeshPrimitive: " << dataByteLength << " bytes of position data\n";
+				for (int i = 0; i < data.size(); i++) {
+					std::cout << ", " << data[i];
+				}
+				std::cout << endl;
+			}
+		}
+
+		std::cout << "\n";
+	}
 
 	return nullptr;
 }
