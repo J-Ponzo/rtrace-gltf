@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <filesystem>
+#include <map>
 #include "Scene.h"
 
 using namespace std;

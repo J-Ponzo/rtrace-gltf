@@ -1,4 +1,4 @@
-#include <GLTFSDK/GLTFResourceReader.h>
+	#include <GLTFSDK/GLTFResourceReader.h>
 #include <GLTFSDK/GLBResourceReader.h>
 #include <GLTFSDK/Deserialize.h>
 #include <fstream>
@@ -123,29 +123,52 @@ Scene* loadScene(filesystem::path path)
 	glTF::Document document;
 	DeserializeDocument(path, document, resourceReader);
 
-	for (const auto& mesh : document.meshes.Elements())
+	map<string, Mesh*> meshes;
+	for (const glTF::Mesh& gltfMesh : document.meshes.Elements())
 	{
-		std::cout << "Mesh: " << mesh.id << "\n";
+		std::cout << "Loading mesh id=" << gltfMesh.id << " : ";
 
-		for (const auto& meshPrimitive : mesh.primitives)
+		Mesh* mesh = new Mesh;
+		for (const auto& gltfPrimitive : gltfMesh.primitives)
 		{
+			std::cout << ". ";
+
+			if (gltfPrimitive.mode != glTF::MESH_TRIANGLES) {
+				std::cout << "(WARN : Primitive mode is not MESH_TRIANGLES !)";
+			}
+
 			std::string accessorId;
+			Primitive* primitive = new Primitive;
 
-			if (meshPrimitive.TryGetAttributeAccessorId(glTF::ACCESSOR_POSITION, accessorId))
+			if (gltfPrimitive.TryGetAttributeAccessorId(glTF::ACCESSOR_POSITION, accessorId))
 			{
-				const glTF::Accessor& accessor = document.accessors.Get(accessorId);
-
-				const auto data = resourceReader->ReadBinaryData<float>(document, accessor);
-				const auto dataByteLength = data.size() * sizeof(float);
-				std::cout << "MeshPrimitive: " << dataByteLength << " bytes of position data\n";
-				for (int i = 0; i < data.size(); i++) {
-					std::cout << ", " << data[i];
+				const glTF::Accessor& posAccessor = document.accessors.Get(accessorId);
+				const auto posData = resourceReader->ReadBinaryData<float>(document, posAccessor);
+				
+				for (int i = 0; i < posData.size(); i += 3) {
+					vec<float, 3> position = { posData[i], posData[(size_t)i + 1], posData[(size_t)i + 2] };
+					primitive->positions.push_back(position);
 				}
-				std::cout << endl;
+
+				const glTF::Accessor& indAccessor = document.accessors.Get(gltfPrimitive.indicesAccessorId);
+				const auto indData = resourceReader->ReadBinaryData<uint16_t>(document, indAccessor);
+
+				for (int i = 0; i < indData.size(); i += 3) {
+					vec<int, 3> triangle = { indData[i], indData[(size_t)i + 1], indData[(size_t)i + 2] };
+					primitive->triangles.push_back(triangle);
+				}
+			}
+			else {
+				std::cout << "(WARN : ACCESSOR_POSITION Attribute Accessor not found !)";
 			}
 		}
+		std::cout << "OK\n";
+		meshes[gltfMesh.id] = mesh;
+	}
 
-		std::cout << "\n";
+	for (const glTF::Node& node : document.nodes.Elements())
+	{
+		
 	}
 
 	return nullptr;

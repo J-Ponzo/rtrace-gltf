@@ -7,6 +7,7 @@ using namespace boost::qvm;
 
 struct Node;
 struct Mesh;
+struct Primitive;
 struct Light;
 struct Camera;
 
@@ -29,8 +30,12 @@ struct Node
 };
 
 struct Mesh {
-	vector<vec<float, 3>*> positions;
-	vector<vec<int, 3>*> triangles;
+	vector<Primitive*> primitives;
+};
+
+struct Primitive {
+	vector<vec<float, 3>> positions;
+	vector<vec<int, 3>> triangles;
 };
 
 struct Light {
