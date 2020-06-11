@@ -123,6 +123,9 @@ Scene* loadScene(filesystem::path path)
 	glTF::Document document;
 	DeserializeDocument(path, document, resourceReader);
 
+	Scene* scene = new Scene;
+	scene->root = new Node;
+
 	map<string, Mesh*> meshes;
 	for (const glTF::Mesh& gltfMesh : document.meshes.Elements())
 	{
@@ -157,19 +160,50 @@ Scene* loadScene(filesystem::path path)
 					vec<int, 3> triangle = { indData[i], indData[(size_t)i + 1], indData[(size_t)i + 2] };
 					primitive->triangles.push_back(triangle);
 				}
+
+				mesh->primitives.push_back(primitive);
 			}
 			else {
 				std::cout << "(WARN : ACCESSOR_POSITION Attribute Accessor not found !)";
 			}
 		}
-		std::cout << "OK\n";
+		std::cout << "OK" << endl;
 		meshes[gltfMesh.id] = mesh;
 	}
 
-	for (const glTF::Node& node : document.nodes.Elements())
+	map<string, Node*> nodes;
+	for (const glTF::Node& gltfNode : document.nodes.Elements())
 	{
-		
+		std::cout << "Loading node name=" << gltfNode.name << " : ";
+
+		if (gltfNode.GetTransformationType() == glTF::TransformationType::TRANSFORMATION_MATRIX) {
+			std::cout << "(WARN : TRANSFORMATION_MATRIX transform type is not supported !)";
+		}
+		Node* node = new Node;	
+		node->name = gltfNode.name;
+		node->translation = { gltfNode.translation.x, gltfNode.translation.y, gltfNode.translation.z };
+		node->rotation = { gltfNode.rotation.x, gltfNode.rotation.y, gltfNode.rotation.z, gltfNode.rotation.w };
+		node->scale = { gltfNode.scale.x, gltfNode.scale.y, gltfNode.scale.z };
+
+		std::cout << "OK" << endl;
+		nodes[gltfNode.id] = node;
 	}
 
-	return nullptr;
+	for (const glTF::Node& gltfNode : document.nodes.Elements())
+	{
+		Node* node = nodes[gltfNode.id];
+		for (const string child : gltfNode.children) {
+			Node* child = nodes[gltfNode.id];
+			node->childs.push_back(child);
+		}
+	}
+
+	for (int i = 0; i < document.scenes.Size(); i++) {
+		glTF::Scene gltfScene = document.scenes[i];
+		for (const string nodeId : gltfScene.nodes) {
+			scene->root->childs.push_back(nodes[nodeId]);
+		}
+	}
+
+	return scene;
 }

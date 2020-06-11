@@ -22,11 +22,12 @@ struct Node
 	quat<float> rotation = {0, 0, 0, 1};
 	vec<float, 3> scale = {1, 1, 1};
 
-	vector<Node*> childs;
-
 	Mesh* mesh;
 	Camera* camera;
 	Light* light;
+
+	string name;
+	vector<Node*> childs;
 };
 
 struct Mesh {
