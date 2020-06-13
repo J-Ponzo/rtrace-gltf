@@ -221,6 +221,17 @@
       "uri": "Lantern_emissive.png"
     }
   ],
+  "cameras": [
+    {
+      "name": "Camera",
+      "type": "perspective",
+        "perspective": {
+        "aspectRatio": 1.77778,
+        "yfov": 0.660593,
+        "znear": 0.01
+      }
+    }
+  ],
   "meshes": [
     {
       "primitives": [
@@ -333,13 +344,23 @@
         0.0
       ],
       "name": "Lantern"
+    },
+	{
+      "camera": 0,
+      "translation": [
+        0.0,
+        0.0,
+        10.0
+      ],
+      "name": "Camera"
     }
   ],
   "scene": 0,
   "scenes": [
     {
       "nodes": [
-        3
+        3,
+		4
       ]
     }
   ],

@@ -46,5 +46,5 @@ struct Light {
 
 struct Camera {
 	float ratio;
-	float fov;
+	float fov;		//expressed in radians
 };

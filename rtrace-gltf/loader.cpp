@@ -171,6 +171,20 @@ Scene* loadScene(filesystem::path path)
 		meshes[gltfMesh.id] = mesh;
 	}
 
+    map<string, Camera*> cameras;
+    for (const glTF::Camera& gltfCam : document.cameras.Elements())
+    {
+        std::cout << "Loading camera id=" << gltfCam.id << " : ";
+
+        Camera* camera = new Camera;
+
+        camera->fov = gltfCam.GetPerspective().yfov;
+        camera->ratio = gltfCam.GetPerspective().aspectRatio;
+
+        std::cout << "OK" << endl;
+        cameras[gltfCam.id] = camera;
+    }
+
 	map<string, Node*> nodes;
 	for (const glTF::Node& gltfNode : document.nodes.Elements())
 	{
@@ -184,6 +198,8 @@ Scene* loadScene(filesystem::path path)
 		node->translation = { gltfNode.translation.x, gltfNode.translation.y, gltfNode.translation.z };
 		node->rotation = { gltfNode.rotation.x, gltfNode.rotation.y, gltfNode.rotation.z, gltfNode.rotation.w };
 		node->scale = { gltfNode.scale.x, gltfNode.scale.y, gltfNode.scale.z };
+        node->mesh = meshes[gltfNode.meshId];
+        node->camera = cameras[gltfNode.cameraId];
 
 		std::cout << "OK" << endl;
 		nodes[gltfNode.id] = node;
