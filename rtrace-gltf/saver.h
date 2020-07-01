@@ -4,5 +4,5 @@
 
 #include "Picture.h"
 
-void savePicture(Picture* picture, string path);
+void savePicture(Picture* picture, std::string path);
 
